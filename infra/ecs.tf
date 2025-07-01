@@ -84,14 +84,31 @@ resource "aws_ecs_task_definition" "web" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
-  container_definitions = jsonencode([{
-    name  = "my-app"
-    image = "YOUR_ECR_IMAGE_URL"
+  container_definitions = jsonencode([
+  {
+    name      = "frontend"
+    image     = "YOUR_FRONTEND_ECR_IMAGE_URL"
     portMappings = [{
       containerPort = 80
       hostPort      = 80
     }]
-  }])
+    environment = [
+      {
+        name  = "API_URL"
+        value = "http://localhost:5000"
+      }
+    ]
+  },
+  {
+    name      = "backend"
+    image     = "YOUR_BACKEND_ECR_IMAGE_URL"
+    portMappings = [{
+      containerPort = 5000
+      hostPort      = 5000
+    }]
+  }
+])
+
 }
 
 resource "aws_ecs_service" "web" {
