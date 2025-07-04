@@ -126,6 +126,8 @@ NEXT_PUBLIC_API_URL=https://your-new-backend-url.com
    - The message from the backend: "You've successfully integrated the backend!"
    - The current backend URL being used
 4. Alternatively: We can integrate Keploy API testing using [Keploy's Browser Extension](https://github.com/keploy/extension)
+5. We have also implemented `cypress` for Frontend unit testing. This is to be strictly implemented during the CI/CD so that the code can be passed for containerising.
+6. 
 
 ### API Endpoints
 
