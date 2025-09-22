@@ -49,7 +49,7 @@ Internet → ALB → Frontend Service (Next.js)
 
 ## Setup and Deployment
 ### Step 1: Configure AWS CLI
-```
+```bash
 aws configure
 # output something like this:
 AWS Access Key ID [****************CZUR]: <your-access-key>
@@ -61,24 +61,24 @@ Default output format [json]: json
 aws sts get-caller-identity
 ```
 ### Step 2: Create ECR Repositories
-```
+```bash
 cd infra
 terraform init
 terraform apply -target=aws_ecr_repository.backend -target=aws_ecr_repository.frontend
 ```
 ### Step 3: Build and Push Docker Images
 **Authenticate Docker with ECR:**
-```
+```bash
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com
 ```
 **Build and Push Backend:**
-```
+```bash
 cd backend
 docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest .
 docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
 ```
 **Build and Push Frontend:**
-```
+```bash
 cd frontend
 docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest .
 docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
@@ -86,7 +86,7 @@ docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
 Replace `ACCOUNT-ID` with your actual AWS account ID
 
 ### Step 4: Deploy Infrastructure
-```
+```bash
 cd infra
 terraform plan
 terraform apply
@@ -101,7 +101,7 @@ This will create:
 - IAM Roles and Policies
 ### Step 5: Access the Application
 **After deployment completes, get the ALB URL:**
-```
+```bash
 terraform output alb_dns_name
 ```
 Visit the URL to access your application:
