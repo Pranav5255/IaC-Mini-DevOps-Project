@@ -4,24 +4,51 @@ import axios from 'axios';
 
 export default function Home() {
   const [message, setMessage] = useState('Loading...');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('Connecting...');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Always use the same origin (the ALB URL) for API calls
+        // This avoids CORS issues since both frontend and backend are served through the same ALB
+        const apiUrl = window.location.origin;
+        
+        console.log('Using API URL:', apiUrl);
+        
         // First check if backend is healthy
-        const healthCheck = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/health`);
+        const healthCheck = await axios.get(`${apiUrl}/api/health`, {
+          timeout: 10000,
+        });
+        
+        console.log('Health check response:', healthCheck.data);
         
         if (healthCheck.data.status === 'healthy') {
           setStatus('Backend is connected!');
+          
           // Then fetch the message
-          const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/message`);
+          const response = await axios.get(`${apiUrl}/api/message`, {
+            timeout: 10000,
+          });
+          
+          console.log('Message response:', response.data);
           setMessage(response.data.message);
         }
       } catch (error) {
-        setMessage('Failed to connect to the backend');
-        setStatus('Backend connection failed');
-        console.error('Error:', error);
+        console.error('Connection error:', error);
+        
+        if (error.code === 'ECONNABORTED') {
+          setMessage('Connection timeout - backend may be starting up');
+          setStatus('Backend connection timeout');
+        } else if (error.response) {
+          setMessage(`Backend error: ${error.response.status} - ${error.response.statusText}`);
+          setStatus('Backend returned an error');
+        } else if (error.request) {
+          setMessage('No response from backend - check if backend service is running');
+          setStatus('No response from backend');
+        } else {
+          setMessage(`Connection failed: ${error.message}`);
+          setStatus('Backend connection failed');
+        }
       }
     };
 
@@ -38,15 +65,18 @@ export default function Home() {
 
       <main>
         <h1>DevOps Assignment</h1>
+        
         <div className="status">
           <p>Status: <span className={status.includes('connected') ? 'success' : 'error'}>{status}</span></p>
         </div>
+        
         <div className="message-box">
           <h2>Backend Message:</h2>
           <p>{message}</p>
         </div>
+        
         <div className="info">
-          <p>Backend URL: {process.env.NEXT_PUBLIC_API_URL}</p>
+          <p>API URL: {typeof window !== 'undefined' ? window.location.origin : 'Loading...'}</p>
         </div>
       </main>
 
