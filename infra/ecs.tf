@@ -2,33 +2,12 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# ECR Repositories
-resource "aws_ecr_repository" "backend" {
-  name = "devops-backend"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-  tags = {
-    Project = "DevOps-Assignment"
-  }
-}
-
-resource "aws_ecr_repository" "frontend" {
-  name = "devops-frontend"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-  tags = {
-    Project = "DevOps-Assignment"
-  }
-}
-
 # VPC Configuration
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = {
     Name = "main-vpc"
   }
@@ -37,7 +16,7 @@ resource "aws_vpc" "main" {
 # Internet Gateway
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
-  
+
   tags = {
     Name = "main-igw"
   }
@@ -49,7 +28,7 @@ resource "aws_subnet" "public_1" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
-  
+
   tags = {
     Name = "public-subnet-1"
   }
@@ -60,7 +39,7 @@ resource "aws_subnet" "public_2" {
   cidr_block              = "10.0.2.0/24"
   availability_zone       = "ap-south-1b"
   map_public_ip_on_launch = true
-  
+
   tags = {
     Name = "public-subnet-2"
   }
@@ -69,7 +48,7 @@ resource "aws_subnet" "public_2" {
 # Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-  
+
   tags = {
     Name = "public-rt"
   }
@@ -149,7 +128,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets           = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+  subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]
 
   enable_deletion_protection = false
 
@@ -232,7 +211,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_exec_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# ECS Task Definition (Updated to reference ECR repositories)
+# ECS Task Definition
 resource "aws_ecs_task_definition" "web" {
   family                   = "my-app-task"
   network_mode             = "awsvpc"
@@ -246,21 +225,21 @@ resource "aws_ecs_task_definition" "web" {
       name      = "frontend"
       image     = "${aws_ecr_repository.frontend.repository_url}:latest"
       essential = true
-      
+
       portMappings = [
         {
           containerPort = 80
           protocol      = "tcp"
         }
       ]
-      
+
       environment = [
         {
           name  = "API_URL"
           value = "http://localhost:5000"
         }
       ]
-      
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -274,14 +253,14 @@ resource "aws_ecs_task_definition" "web" {
       name      = "backend"
       image     = "${aws_ecr_repository.backend.repository_url}:latest"
       essential = true
-      
+
       portMappings = [
         {
           containerPort = 5000
           protocol      = "tcp"
         }
       ]
-      
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -362,14 +341,4 @@ output "ecs_cluster_name" {
 output "ecs_service_name" {
   description = "Name of the ECS service"
   value       = aws_ecs_service.web.name
-}
-
-output "backend_repo_url" {
-  description = "URL of the backend ECR repository"
-  value       = aws_ecr_repository.backend.repository_url
-}
-
-output "frontend_repo_url" {
-  description = "URL of the frontend ECR repository"  
-  value       = aws_ecr_repository.frontend.repository_url
 }
