@@ -2,6 +2,27 @@ provider "aws" {
   region = "ap-south-1"
 }
 
+# ECR Repositories
+resource "aws_ecr_repository" "backend" {
+  name = "devops-backend"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  tags = {
+    Project = "DevOps-Assignment"
+  }
+}
+
+resource "aws_ecr_repository" "frontend" {
+  name = "devops-frontend"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+  tags = {
+    Project = "DevOps-Assignment"
+  }
+}
+
 # VPC Configuration
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
@@ -211,7 +232,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_exec_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# ECS Task Definition
+# ECS Task Definition (Updated to reference ECR repositories)
 resource "aws_ecs_task_definition" "web" {
   family                   = "my-app-task"
   network_mode             = "awsvpc"
@@ -223,7 +244,7 @@ resource "aws_ecs_task_definition" "web" {
   container_definitions = jsonencode([
     {
       name      = "frontend"
-      image     = "YOUR_FRONTEND_ECR_IMAGE_URL"
+      image     = "${aws_ecr_repository.frontend.repository_url}:latest"
       essential = true
       
       portMappings = [
@@ -251,7 +272,7 @@ resource "aws_ecs_task_definition" "web" {
     },
     {
       name      = "backend"
-      image     = "YOUR_BACKEND_ECR_IMAGE_URL"
+      image     = "${aws_ecr_repository.backend.repository_url}:latest"
       essential = true
       
       portMappings = [
@@ -271,6 +292,11 @@ resource "aws_ecs_task_definition" "web" {
       }
     }
   ])
+
+  depends_on = [
+    aws_ecr_repository.frontend,
+    aws_ecr_repository.backend
+  ]
 
   tags = {
     Name = "my-app-task"
@@ -336,4 +362,14 @@ output "ecs_cluster_name" {
 output "ecs_service_name" {
   description = "Name of the ECS service"
   value       = aws_ecs_service.web.name
+}
+
+output "backend_repo_url" {
+  description = "URL of the backend ECR repository"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+output "frontend_repo_url" {
+  description = "URL of the frontend ECR repository"  
+  value       = aws_ecr_repository.frontend.repository_url
 }
