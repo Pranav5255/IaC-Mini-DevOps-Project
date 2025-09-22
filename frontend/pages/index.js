@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <div className="container">
       <Head>
-        <title>DevOps Assignment</title>
+        <title>IaC is Easy</title>
         <meta name="description" content="DevOps Assignment with FastAPI and Next.js" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
