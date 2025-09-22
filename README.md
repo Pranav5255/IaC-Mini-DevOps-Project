@@ -15,9 +15,7 @@ Internet → ALB → Frontend Service (Next.js)
 ## Project Structure
 
 ```
-.
-├── .github/workflows/
-│   └──ci-cd.yml           # GitHub Actions CI/CD pipeline  
+.../
 ├── backend/               # FastAPI backend
 │   ├── app/
 │   │   └── main.py       # Main FastAPI application
@@ -58,6 +56,8 @@ AWS Access Key ID [****************CZUR]: <your-access-key>
 AWS Secret Access Key [****************T391]: <your-secret-access-key>
 Default region name [ap-south-1]: ap-south-1
 Default output format [json]: json
+
+# verify if configured or not
 aws sts get-caller-identity
 ```
 ### Step 2: Create ECR Repositories
@@ -67,17 +67,17 @@ terraform init
 terraform apply -target=aws_ecr_repository.backend -target=aws_ecr_repository.frontend
 ```
 ### Step 3: Build and Push Docker Images
-*Authenticate Docker with ECR:*
+**Authenticate Docker with ECR:**
 ```
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com
 ```
-*Build and Push Backend:*
+**Build and Push Backend:**
 ```
 cd backend
 docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest .
 docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
 ```
-*Build and Push Frontend:*
+**Build and Push Frontend:**
 ```
 cd frontend
 docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest .
@@ -100,7 +100,7 @@ This will create:
 - CloudWatch Log Groups
 - IAM Roles and Policies
 ### Step 5: Access the Application
-After deployment completes, get the ALB URL:
+**After deployment completes, get the ALB URL:**
 ```
 terraform output alb_dns_name
 ```
