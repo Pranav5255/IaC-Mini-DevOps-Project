@@ -2,6 +2,16 @@
 
 This project consists of a FastAPI backend and a Next.js frontend that communicates with the backend.
 
+## Architecture
+```
+Internet → ALB → Frontend Service (Next.js)
+              ↘ /api/* → Backend Service (FastAPI)
+```
+- Frontend: Next.js application serving the web interface
+- Backend: FastAPI providing REST APIs
+- Infrastructure: AWS ECS Fargate with Application Load Balancer
+- Container Registry: AWS ECR for Docker images
+- Orchestration: Terraform for infrastructure as code
 ## Project Structure
 
 ```
@@ -23,7 +33,15 @@ This project consists of a FastAPI backend and a Next.js frontend that communica
       └──terraform.tfstate
 
 ```
-
+### Features
+- Containerized Applications: Docker containers for both frontend and backend
+- Cloud-Native Architecture: AWS ECS Fargate serverless containers
+- Load Balancing: Application Load Balancer with path-based routing
+- Infrastructure as Code: Complete Terraform automation
+- CI/CD Ready: Automated testing and deployment pipeline structure
+- Security: Proper VPC, security groups, and IAM configurations
+- Monitoring: CloudWatch logging integration
+- Health Checks: Application and infrastructure health monitoring
 ## Prerequisites
 
 - Python 3.8+
@@ -31,6 +49,65 @@ This project consists of a FastAPI backend and a Next.js frontend that communica
 - npm or yarn
 - AWS CLI configured on local machine
 
+## Setup and Deployment
+### Step 1: Configure AWS CLI
+```
+aws configure
+# output something like this:
+AWS Access Key ID [****************CZUR]: <your-access-key>
+AWS Secret Access Key [****************T391]: <your-secret-access-key>
+Default region name [ap-south-1]: ap-south-1
+Default output format [json]: json
+aws sts get-caller-identity
+```
+### Step 2: Create ECR Repositories
+```
+cd infra
+terraform init
+terraform apply -target=aws_ecr_repository.backend -target=aws_ecr_repository.frontend
+```
+### Step 3: Build and Push Docker Images
+*Authenticate Docker with ECR:*
+```
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com
+```
+*Build and Push Backend:*
+```
+cd backend
+docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest .
+docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+```
+*Build and Push Frontend:*
+```
+cd frontend
+docker build -t ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest .
+docker push ACCOUNT-ID.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+```
+Replace `ACCOUNT-ID` with your actual AWS account ID
+
+### Step 4: Deploy Infrastructure
+```
+cd infra
+terraform plan
+terraform apply
+```
+This will create:
+
+- VPC with public subnets
+- Application Load Balancer
+- ECS Cluster and Services
+- Security Groups
+- CloudWatch Log Groups
+- IAM Roles and Policies
+### Step 5: Access the Application
+After deployment completes, get the ALB URL:
+```
+terraform output alb_dns_name
+```
+Visit the URL to access your application:
+
+- Frontend: `http://your-alb-dns-name`
+- Backend API: `http://your-alb-dns-name/api/health`
 ## Local Machine Setup
 
 ### Backend Setup
